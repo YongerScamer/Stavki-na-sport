@@ -4,8 +4,8 @@ from setttings import *
 class App():
     def __init__(self) -> None:
         pg.init()
-        self.sc = pg.display.set_mode((H, W))
-        self.clock = pg.Time.clock()
+        self.sc = pg.display.set_mode((W, H))
+        self.clock = pg.time.Clock()
     def run(self):
         while 1:
             for event in pg.event.get():
