@@ -1,5 +1,6 @@
 import pygame as pg
 from setttings import *
+from engine import *
 
 class App():
     def __init__(self) -> None:
@@ -8,13 +9,17 @@ class App():
         pg.display.set_caption("1XВШЭ")
         pg.display.set_icon(pg.image.load("images/HSE_icon.png").convert())
         self.clock = pg.time.Clock()
-        self.intro = pg.image.load("images/1XHSE.jpg").convert()
+        self.player = Player()
+        self.menu = Menu()
+        self.mods = [MathList(), PlayerProfil()]
     def run(self):
         while 1:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
                     exit()
-            self.sc.blit(self.intro, (0, 0))
+            self.sc.fill((255, 255, 255))
+            self.menu.update()
+            self.mods[self.menu.current_mod].update()
             pg.display.flip()
             self.clock.tick(60)
