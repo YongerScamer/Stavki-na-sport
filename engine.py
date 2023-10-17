@@ -37,9 +37,10 @@ class Menu():
                         Button((0, 250, 270, 340), images["bet_list_button.png"], self.on_bet_list), 
                         Button((0, 350, 270, 440), images["statistic_button.png"], self.on_statistic)]
     def update(self):
-        pg.draw.rect(self.sc, (227, 253, 253), (0, 0, 290, 720))
-        for button in self.buttons:
-            button.update()
+        if not self.current_mod:
+            pg.draw.rect(self.sc, (227, 253, 253), (0, 0, 290, 720))
+            for button in self.buttons:
+                button.update()
     def on_profile(self):
         self.current_mod = 0
         print("profile")
@@ -76,6 +77,28 @@ class MathHandler():
     def __init__(self) -> None:
         self.maths = []
     def get_info(self, place = False, date = False, team1 = False, team2 = False, sport = False, result = False, cf = False, bet = False):
-        pass
+        res = []
+        for i, match in enumerate(self.maths):
+            pass
 
-
+class LoadWin():
+    def __init__(self, menu) -> None:
+        self.menu = menu
+        self.l = 0
+        self.d = 120
+        self.texts = ["Савина настраивает микрофон", "Малышев высчитывает вероятность выйгрыша", "Беспалов пропивает победную ставку"]
+        self.index = 0
+        self.sc = pg.display.get_surface()
+        self.font = pg.font.SysFont("Arial", 15)
+    def update(self):
+        if self.index >= len(self.texts):
+                self.menu.current_mode = 1
+                return 0
+        self.sc.blit(images["1XHSE.jpg"], (0, 0))
+        if self.l == 0:
+            self.rtext = self.font.render(self.texts[self.index], 1, (0, 0, 0))
+        self.sc.blit(self.rtext, (540 - self.rtext.get_size()[0]/2, 690))
+        self.l += 1
+        if self.l == self.d:
+            self.l = 0
+            self.index += 1

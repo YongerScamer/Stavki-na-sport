@@ -1,4 +1,5 @@
 from random import *
+import time
 class Match():
     def __init__(self):
         self.place = ""
@@ -11,10 +12,10 @@ class Match():
         self.coef_win1 = 0
         self.coef_win2 = 0
         self.coef_draw = 0
-        self.get_coef()
+        self.solve_coef()
         self.bet = 0
 
-    def get_coef(self):
+    def solve_coef(self):
         if self.result == 1:
             self.coef_win1 = round(random.uniform((1.5, 3), 2))
             self.coef_win2 = 1.4 * self.coef_win1
@@ -33,7 +34,7 @@ class PlaceGen:
         self.places = ["Стадион Труд", "Стадион Северный", "Стадион Нижний Новгород", "Поселок", "Реактор", "ФОК", "Полигон", "Парк", "Сантьяго Бернабеу", "Камп Ноу"]
         self.adjectives1 = ["Забытый", "Великий", "Переоцененный", "Мертвый", "Старый", "Огромный", "Новый", "Страшный"]
     
-    def generate_random_place(self):
+    def generate(self):
         random_place = random.choice (self.places)
         random_adjective1 = random.choice (self.adjectives1)
         return f"{random_adjective1} {random_place}"
@@ -43,7 +44,7 @@ class NameGen:
         self.names = ["Мажоры", "Упыри", "Бедолаги", "Борцухи", "Легкие курильщика", "Жуки", "Смурфы", "Гении", "Лудоманы", "Профессионалы", "Парни", "Линуксоводы", "Приспособленцы", "Нефоры", "Спортики", "Лодыри", "Либерахи", "Питонисты", "Рабочие"]
         self.adjectives2 = ["Взорванные", "Заряженные", "Неуверенные", "Летучие", "Странные", "Напуганные", "Липкие", "Убитые"]
 
-    def generate_random_place(self):
+    def generate(self):
         random_name = random.choice (self.names)
         random_adjective2 = random.choice (self.adjectives2)
         return f"{random_adjective2} {random_name}"
@@ -53,7 +54,21 @@ class SportGen:
         self.adjectives = ["Пьяный", "Польский", "Юношеский", "Подводный", "Арабский"]
         self.sports = ["футбол", "хоккей", "хоббихорсинг", "баскетбол ногой", "CS"]
 
-    def generate_random_sport(self):
+    def generate(self):
         random_adjective = random.choice(self.adjectives)
         random_sport = random.choice(self.sports)
         return f"{random_adjective} {random_sport}"
+    
+class MatchGen():
+    def __init__(self) -> None:
+        self.sportGen = SportGen()
+        self.nameGen = NameGen()
+        self.placeGen = PlaceGen()
+    def generate(self):
+        m = Match()
+        m.date = time.time()
+        m.sport = self.sportGen.generate()
+        m.place = self.placeGen.generate()
+        m.team1 = self.nameGen.generate()
+        m.team2 = self.nameGen.generate()
+        return m

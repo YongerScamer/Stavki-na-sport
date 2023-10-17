@@ -11,7 +11,7 @@ class App():
         self.clock = pg.time.Clock()
         self.player = Player()
         self.menu = Menu()
-        self.mods = [MathList(), PlayerProfil()]
+        self.mods = [LoadWin(self.menu), MathList(), PlayerProfil()]
     def run(self):
         while 1:
             for event in pg.event.get():
