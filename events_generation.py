@@ -1,16 +1,17 @@
-from randon import *
+from random import *
 class Match():
-    def __init__(self, place, date, team1, team2, sport, result, bet, coef_win1,coef_win2, coef_draw ):
-        self.place = place
-        self.date = date
-        self.team1 = team1
-        self.team2 = team2
-        self.sport = sport
+    def __init__(self):
+        self.place = ""
+        self.date = 0
+        self.team1 = ""
+        self.team2 = ""
+        self.sport = ""
         """"1 - победа первой, 2 - победа второй, 3 - ничья"""
         self.result = randint(1, 3)
-        self.coef_win1 = coef_win1
-        self.coef_win2 = coef_win2
-        self.coef_draw = coef_draw
+        self.coef_win1 = 0
+        self.coef_win2 = 0
+        self.coef_draw = 0
+        self.get_coef()
         self.bet = 0
 
     def get_coef(self):
