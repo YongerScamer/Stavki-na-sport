@@ -2,7 +2,7 @@ import pygame as pg
 from setttings import *
 from engine import *
 
-class App():
+class App:
     def __init__(self) -> None:
         pg.init()
         self.sc = pg.display.set_mode((W, H))
@@ -11,7 +11,8 @@ class App():
         self.clock = pg.time.Clock()
         self.player = Player()
         self.menu = Menu()
-        self.mods = [LoadWin(self.menu), MathList(), PlayerProfil()]
+        self.mods = [LoadWin(self.change_mod), PlayerProfil(self.player), MatchList(self.match_menu), BetList(), Statistic(), MatchMenu()]
+
     def run(self):
         while 1:
             for event in pg.event.get():
@@ -22,4 +23,11 @@ class App():
             self.menu.update()
             self.mods[self.menu.current_mod].update()
             pg.display.flip()
-            self.clock.tick(60)
+            self.clock.tick()
+
+    def change_mod(self, n):
+        self.menu.current_mod = n
+
+    def match_menu(self, match):
+        self.menu.current_mod = 5
+        self.mods[5].match = match
