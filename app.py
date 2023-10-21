@@ -1,6 +1,7 @@
 import pygame as pg
 from setttings import *
 from engine import *
+import sys
 
 class App:
     def __init__(self) -> None:
@@ -11,18 +12,22 @@ class App:
         self.clock = pg.time.Clock()
         self.player = Player()
         self.menu = Menu()
-        self.mods = [LoadWin(self.change_mod), PlayerProfil(self.player), MatchList(self.match_menu), BetList(), Statistic(), MatchMenu()]
+        self.mods = [LoadWin(self.change_mod), PlayerProfil(self.player), MatchList(self.match_menu, self.player), BetList(), Statistic(), MatchMenu()]
 
     def run(self):
         while 1:
-            for event in pg.event.get():
+            events = pg.event.get()
+            for event in events:
                 if event.type == pg.QUIT:
                     pg.quit()
-                    exit()
+                    sys.exit()
+                    quit()
             self.sc.fill((255, 255, 255))
             self.menu.update()
             self.mods[self.menu.current_mod].update()
+            self.mods[2].refresh()
             pg.display.flip()
+            pygame_widgets.update(events)
             self.clock.tick()
 
     def change_mod(self, n):

@@ -76,7 +76,7 @@ class MatchGen:
 
     def generate(self):
         m = Match()
-        m.date = time.time() + randint(1000, 10000)
+        m.date = time.time() + randint(50, 60)
         m.sport = self.sportGen.generate()
         m.place = self.placeGen.generate()
         m.team1 = self.nameGen.generate()

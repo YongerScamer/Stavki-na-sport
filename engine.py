@@ -1,7 +1,11 @@
+import pygame_widgets
+
 from events_generation import *
 from setttings import *
 import pygame as pg
 import time
+from pygame_widgets.slider import Slider
+from pygame_widgets.textbox import TextBox
 
 images = {}
 
@@ -10,7 +14,7 @@ def load_images():
     global images
     images = {}
     for file in os.listdir("images"):
-        images[file] = pg.image.load(f"images/{file}").convert()
+        images[file] = pg.image.load(f"images/{file}").convert_alpha()
     return images
 
 
@@ -19,23 +23,22 @@ class Player:
         self.money = 100000
         self.name = "Вышковец"
 
-def f():
-    print("opa")
 
-
-def generate_tab(math, f):
+def generate_tab(match, f):
     sc = pg.Surface((750, 100))
     sc.fill((227, 253, 253))
-    sc.blit(pg.font.SysFont("arial", 25).render(f"{math.team1} vs {math.team2}", 1, (0, 0, 0)), (2, 2))
-    sc.blit(pg.font.SysFont("arial", 12).render(math.sport, 1, (100, 100, 100)), (5, 35))
-    sc.blit(pg.font.SysFont("arial", 14).render(f"Победа 1: {math.coef_win1} Ничья: {math.coef_draw} Победа 2: {math.coef_win2}", 1, (0, 0, 0)), (5, 55))
-    button = Button([300, 0, 700, 100], sc, f, arg = math)
+    sc.blit(pg.font.SysFont("arial", 25).render(f"{match.team1} vs {match.team2}", 1, (0, 0, 0)), (2, 2))
+    sc.blit(pg.font.SysFont("arial", 12).render(match.sport, 1, (100, 100, 100)), (5, 35))
+    sc.blit(pg.font.SysFont("arial", 14).render(f"Победа 1: {match.coef_win1} Ничья: {match.coef_draw} Победа 2: {match.coef_win2}", 1, (0, 0, 0)), (5, 55))
+    button = Button([300, 0, 700, 100], sc, f)
     return button
 
+def bet_on(matchBet):
+    matchBet[0].bet = matchBet[1]
 
 class MatchList:
-    def __init__(self, f) -> None:
-        self.maths = MathHandler()
+    def __init__(self, f, player) -> None:
+        self.maths = MathHandler(self, player)
         self.maths.generate()
         self.tabs = []
         self.y = 0
@@ -47,7 +50,7 @@ class MatchList:
     def update(self):
         for i in range(len(self.tabs)):
             self.tabs[i].coord[1] = i * 110 + 10 - self.y
-            self.tabs[i].update()
+            self.tabs[i].update(self.maths.maths[i])
         for event in pg.event.get():
             if event.type == pg.MOUSEWHEEL:
                 self.y -= event.y * 40
@@ -55,6 +58,8 @@ class MatchList:
             if event.type == pg.QUIT:
                 pg.quit()
                 exit()
+    def refresh(self):
+        self.maths.check_old_bet()
 
 class PlayerProfil:
     def __init__(self, player) -> None:
@@ -89,8 +94,34 @@ class MatchMenu:
     def __init__(self):
         self.match = None
         self.sc = pg.display.get_surface()
+        self.buttons = [
+            Button((320, 300, 210, 90), images["team1_button.png"], bet_on),
+            Button((580, 300, 210, 90), images["draw_button.png"], bet_on),
+            Button((840, 300, 210, 90), images["team2_button.png"], bet_on)
+        ]
+        self.slider = Slider(self.sc, 340, 510, 690, 20, min=1000, max=100000, step=1000)
+        self.output = TextBox(self.sc, 630, 450, 100, 50, fontSize=30)
+        self.activ = True
     def update(self):
-        pg.draw.rect(self.sc, (200, 200, 200), (300, 30, 770, 660))
+        pg.draw.rect(self.sc, (240, 240, 240), (300, 30, 770, 660))
+        self.sc.blit(pg.font.SysFont("arial", 30).render(self.match.team1 + " VS " + self.match.team2, 1, (0, 0, 0)), (320, 50))
+        self.sc.blit(pg.font.SysFont("arial", 20).render(self.match.sport, 1, (30, 30, 30)), (320, 90))
+        self.sc.blit(images["locate_ico.png"], (310, 640))
+        self.sc.blit(pg.font.SysFont("arial", 26).render(self.match.place, 1, (30, 30, 30)), (340, 646))
+        self.sc.blit(pg.font.SysFont("arial", 17).render(f"Победа 1: {self.match.coef_win1} Ничья: {self.match.coef_draw} Победа 2: {self.match.coef_win2}", 1, (0, 0, 0)), (550, 120))
+        self.sc.blit(pg.font.SysFont("arial", 10).render("Закончится: " + time.ctime(self.match.date), 1, (150, 150, 150)), (890, 40))
+        self.slider.draw()
+        self.output.setText(self.slider.getValue())
+        self.output.draw()
+        if self.match.bet != 0 and self.activ:
+            for i in self.buttons:
+                i.activ = False
+            self.activ = False
+        self.buttons[0].update([self.match, (0, self.slider.getValue())])
+        self.buttons[1].update([self.match, (2, self.slider.getValue())])
+        self.buttons[2].update([self.match, (1, self.slider.getValue())])
+        print(self.match.result)
+
 
 class Menu:
     def __init__(self) -> None:
@@ -110,57 +141,56 @@ class Menu:
 
     def on_profile(self):
         self.current_mod = 1
-        print("profile")
 
     def on_match_list(self):
         self.current_mod = 2
 
     def on_bet_list(self):
         self.current_mod = 3
-        print("bet_list")
 
     def on_statistic(self):
         self.current_mod = 4
-        print("statistic")
 
 
 class Button:
-    def __init__(self, coord, image, function, arg = None) -> None:
+    def __init__(self, coord, image, function) -> None:
         self.coord = coord
         self.image = image
         self.f = function
         self.sc = pg.display.get_surface()
         self.onButton = False
-        self.arg = arg
-
-    def update(self):
+        self.activ = True
+    def update(self, arg = None):
         self.sc.blit(self.image, (self.coord[0], self.coord[1]))
-        x, y = pg.mouse.get_pos()
-        if self.coord[0] < x < self.coord[0] + self.coord[2] and self.coord[1] < y < self.coord[1] + self.coord[3]:
-            if pg.mouse.get_pressed(3)[0]:
-                self.onButton = True
-            else:
-                if self.onButton:
-                    if self.arg == None:
-                        self.f()
-                    else:
-                        self.f(self.arg)
-                    self.onButton = False
+        if self.activ:
+            x, y = pg.mouse.get_pos()
+            if self.coord[0] < x < self.coord[0] + self.coord[2] and self.coord[1] < y < self.coord[1] + self.coord[3]:
+                if pg.mouse.get_pressed(3)[0]:
+                    self.onButton = True
+                else:
+                    if self.onButton:
+                        if arg == None:
+                            self.f()
+                        else:
+                            self.f(arg)
+                        self.onButton = False
 
 
 class MathHandler:
-    def __init__(self, maths=[], autofill=False, maxMatch=15) -> None:
+    def __init__(self, matchlist, player, maths=None, autofill=False, maxMatch=15) -> None:
+        if maths is None:
+            maths = []
         self.maths = maths
         self.autofill = autofill
         self.maxMatch = maxMatch
-
+        self.player = player
+        self.matchlist = matchlist
     def check_old_bet(self):
         money = 0
         t = time.time()
-        old_matchs = MathHandler()
         gen = MatchGen()
         for i in self.maths:
-            if i.bet != 0:
+            if i.bet != 0 and t > i.date:
                 if i.bet[0] == i.result:
                     if i.bet == 0:
                         money += i.bet[1] * i.coef_win1
@@ -168,12 +198,12 @@ class MathHandler:
                         money += i.bet[1] * i.coef_win2
                     else:
                         money += i.bet[1] * i.coef_draw
-                    old_matchs.maths.append(i)
+                    self.matchlist.tabs.pop(self.maths.index(i))
                     self.maths.pop(self.maths.index(i))
         if self.autofill:
             for i in range(self.maxMatch - len(self.maths)):
                 self.maths.append(gen.generate())
-        return old_matchs, money
+        self.player.money += money
 
     def generate(self):
         gen = MatchGen()
