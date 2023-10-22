@@ -12,7 +12,8 @@ class App:
         self.clock = pg.time.Clock()
         self.player = Player()
         self.menu = Menu()
-        self.mods = [LoadWin(self.change_mod), PlayerProfil(self.player), MatchList(self.match_menu, self.player), BetList(), Statistic(), MatchMenu()]
+        self.mods = [LoadWin(self.change_mod), PlayerProfil(self.player), MatchList(self.match_menu, self.player), BetList(), Statistic(), MatchMenu(self.player, self.menu)]
+        self.mods[5].matchlist = self.mods[2]
 
     def run(self):
         while 1:
@@ -21,7 +22,6 @@ class App:
                 if event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
-                    quit()
             self.sc.fill((255, 255, 255))
             self.menu.update()
             self.mods[self.menu.current_mod].update()

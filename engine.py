@@ -35,10 +35,11 @@ def generate_tab(match, f):
 
 def bet_on(matchBet):
     matchBet[0].bet = matchBet[1]
+    matchBet[2].money -= matchBet[1][1]
 
 class MatchList:
     def __init__(self, f, player) -> None:
-        self.maths = MathHandler(self, player)
+        self.maths = MathHandler(self, player, autofill=True)
         self.maths.generate()
         self.tabs = []
         self.y = 0
@@ -60,6 +61,9 @@ class MatchList:
                 exit()
     def refresh(self):
         self.maths.check_old_bet()
+    def new_tab(self, match):
+        self.tabs.append(generate_tab(match, self.f))
+        self.maths.maths.append(match)
 
 class PlayerProfil:
     def __init__(self, player) -> None:
@@ -91,18 +95,22 @@ class Statistic:
         pass
 
 class MatchMenu:
-    def __init__(self):
+    def __init__(self, player, menu):
+        self.player = player
+        self.menu = menu
         self.match = None
         self.sc = pg.display.get_surface()
+        self.matchlist = 0
         self.buttons = [
             Button((320, 300, 210, 90), images["team1_button.png"], bet_on),
             Button((580, 300, 210, 90), images["draw_button.png"], bet_on),
             Button((840, 300, 210, 90), images["team2_button.png"], bet_on)
         ]
-        self.slider = Slider(self.sc, 340, 510, 690, 20, min=1000, max=100000, step=1000)
+        self.slider = Slider(self.sc, 340, 510, 690, 20, min=1000, max=min(100000, self.player.money), step=1000)
         self.output = TextBox(self.sc, 630, 450, 100, 50, fontSize=30)
-        self.activ = True
     def update(self):
+        if not self.match in self.matchlist.maths.maths:
+            self.menu.on_match_list()
         pg.draw.rect(self.sc, (240, 240, 240), (300, 30, 770, 660))
         self.sc.blit(pg.font.SysFont("arial", 30).render(self.match.team1 + " VS " + self.match.team2, 1, (0, 0, 0)), (320, 50))
         self.sc.blit(pg.font.SysFont("arial", 20).render(self.match.sport, 1, (30, 30, 30)), (320, 90))
@@ -113,13 +121,16 @@ class MatchMenu:
         self.slider.draw()
         self.output.setText(self.slider.getValue())
         self.output.draw()
-        if self.match.bet != 0 and self.activ:
+        self.slider.max = max(5000, min(100000, self.player.money))
+        self.slider.value = min(self.slider.max, self.slider.value)
+        if self.match.bet == 0 and self.player.money > 1000:
             for i in self.buttons:
-                i.activ = False
-            self.activ = False
-        self.buttons[0].update([self.match, (0, self.slider.getValue())])
-        self.buttons[1].update([self.match, (2, self.slider.getValue())])
-        self.buttons[2].update([self.match, (1, self.slider.getValue())])
+                i.activ = True
+        self.buttons[0].update([self.match, (0, self.slider.getValue()), self.player])
+        self.buttons[1].update([self.match, (2, self.slider.getValue()), self.player])
+        self.buttons[2].update([self.match, (1, self.slider.getValue()), self.player])
+        for i in self.buttons:
+            i.activ = False
         print(self.match.result)
 
 
@@ -190,19 +201,20 @@ class MathHandler:
         t = time.time()
         gen = MatchGen()
         for i in self.maths:
-            if i.bet != 0 and t > i.date:
-                if i.bet[0] == i.result:
-                    if i.bet == 0:
-                        money += i.bet[1] * i.coef_win1
-                    elif i.bet == 1:
-                        money += i.bet[1] * i.coef_win2
-                    else:
-                        money += i.bet[1] * i.coef_draw
-                    self.matchlist.tabs.pop(self.maths.index(i))
-                    self.maths.pop(self.maths.index(i))
+            if t > i.date:
+                if i.bet != 0:
+                    if i.bet[0] == i.result:
+                        if i.bet == 0:
+                            money += i.bet[1] * i.coef_win1
+                        elif i.bet == 1:
+                            money += i.bet[1] * i.coef_win2
+                        else:
+                            money += i.bet[1] * i.coef_draw
+                self.matchlist.tabs.pop(self.maths.index(i))
+                self.maths.pop(self.maths.index(i))
         if self.autofill:
             for i in range(self.maxMatch - len(self.maths)):
-                self.maths.append(gen.generate())
+                self.matchlist.new_tab(gen.generate())
         self.player.money += money
 
     def generate(self):
