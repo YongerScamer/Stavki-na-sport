@@ -4,6 +4,7 @@ import pygame as pg
 import time
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
+from math import log2
 
 images = {}
 
@@ -63,6 +64,7 @@ class Menu:
         self.matchmenu = MatchMenu(self)
         self.current_mod = self.loadwin
         self.matchlist.maths.load()
+        self.statistic.load()
 
     def update(self):
         if self.current_mod != 0:
@@ -91,6 +93,7 @@ class Menu:
     def save(self):
         self.player.save()
         self.matchlist.maths.save()
+        self.statistic.save()
 
 
 # ---------------------------MATCH_LIST--------------------------------------------
@@ -179,10 +182,37 @@ class BetList:
 # -----------------------STATISTIC----------------------------------------------------
 class Statistic:
     def __init__(self, menu):
-        pass
-
+        self.profite = [10000, -108100, 110801, -11111, 43543]
+        self.sc = pg.display.get_surface()
     def update(self):
-        pass
+        pg.draw.line(self.sc, (0, 0, 0), (320, 300), (870, 300), 2)
+        self.sc.blit(pg.font.SysFont("arial", 30).render("Статистика за последние 50 ставок", 1, (0, 0, 0)), (400, 30))
+        for i in range(len(self.profite)):
+            if self.profite[i] > 0:
+                pg.draw.rect(self.sc, (10, 255, 10), (320 + i * 11, 300 - int(self.profite[i]/1000), 10, int(self.profite[i]/1000)))
+            else:
+                pg.draw.rect(self.sc, (255, 10, 10), (320 + i * 11, 300, 10, -int(self.profite[i]/1000)))
+    def add(self, match: Match):
+        coff = 0
+        if match.bet[0] == 0:
+            coff = match.coef_win1
+        elif match.bet[0] == 1:
+            coff = match.coef_win2
+        else:
+            coff = match.coef_draw
+        if match.result == match.bet[0]:
+            self.profite.append(coff*match.bet[1] - match.bet[1])
+        else:
+            self.profite.append(-match.bet[1])
+        if len(self.profite) >= 50:
+            self.profite.pop(0)
+    def save(self):
+        with open("stat", "w") as f:
+            for i in self.profite:
+                f.write(f"{i}\n")
+    def load(self):
+        with open("stat", "r") as f:
+            self.profite = list(map(int, f.read().split()))
 
 
 # --------------------------------MATCH_MENU-----------------------------------------------------
@@ -227,9 +257,6 @@ class MatchMenu:
         self.buttons[2].update([self.match, (1, self.slider.getValue()), self.menu.player])
         for i in self.buttons:
             i.activ = False
-        print(self.match.result)
-
-
 # ------------BUTTON--------------------------------------
 class Button:
     def __init__(self, coord, image, function) -> None:
@@ -279,6 +306,7 @@ class MathcHandler:
                             money += i.bet[1] * i.coef_win2
                         else:
                             money += i.bet[1] * i.coef_draw
+                    self.menu.statistic.add(i)
                 self.menu.matchlist.tabs.pop(self.maths.index(i))
                 self.maths.pop(self.maths.index(i))
         for i in range(self.max_match - len(self.maths)):
@@ -340,7 +368,7 @@ class LoadWin:
         self.rtext = None
         self.menu = menu
         self.l = 0
-        self.d = 1000
+        self.d = 1000git 
         self.texts = ["Савина настраивает микрофон", "Малышев высчитывает вероятность выигрыша",
                       "Беспалов собирает листочки со ставками"]
         self.index = 0
